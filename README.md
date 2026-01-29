@@ -5,7 +5,7 @@ Note: this pipeline was developed to have imputated genotypes to demultiplex sin
 
 Created by: Nathan V Ribeiro <n.v.ribeiro@umcg.nl> - UMCG Immunogenetics Group
 
-# How to use
+## How to use
 Get the codes
 
 Update the file config/config.yaml
