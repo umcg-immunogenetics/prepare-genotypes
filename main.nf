@@ -54,9 +54,10 @@ process CREATE_LGEN {
     path sample_info
 
     output:
-    path "${params.dataset}.lgen"
-    path "${params.dataset}.map"
-    path "${params.dataset}.fam"
+    tuple val(params.dataset),
+          path("${params.dataset}.lgen"),
+          path("${params.dataset}.map"),
+          path("${params.dataset}.fam")
 
     script:
     """
@@ -65,28 +66,34 @@ process CREATE_LGEN {
     Rscript scripts/create_lgen.R \
         $final_report \
         $sample_info \
-        ${params.output_dir}/${params.dataset}.lgen \
-        ${params.output_dir}/${params.dataset}.map \
-        ${params.output_dir}/${params.dataset}.fam
+        ${params.dataset}.lgen \
+        ${params.dataset}.map \
+        ${params.dataset}.fam
     """
 }
 
 process LGEN_TO_PLINK {
 
     input:
-    path lgen_files
+    tuple val(prefix),
+          path(lgen),
+          path(map),
+          path(fam)
 
     output:
-    path "${params.dataset}.*"
+    tuple val(prefix),
+          path("${prefix}.bed"),
+          path("${prefix}.bim"),
+          path("${prefix}.fam")
 
     script:
     """
     module load PLINK/1.9-beta6-20190617
 
-    plink --lfile ${params.dataset} \
+    plink --lfile ${prefix} \
           --autosome \
           --make-bed \
-          --out ${params.dataset}
+          --out ${prefix}
     """
 }
 
