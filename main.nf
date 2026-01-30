@@ -1,9 +1,5 @@
 nextflow.enable.dsl=2
 
-Channel
-    .from(1..22)
-    .set { chr_ch }
-
 workflow {
 
     /*
@@ -32,17 +28,17 @@ workflow {
     /*
      * Step 5: HRC formatting
      */
-     hrc_vcfs = MAKE_HRC_VCF(freq_ch)
+    hrc_vcfs = MAKE_HRC_VCF(freq_ch)
 
     /*
      * Step 6: checkVCF (parallel per chr)
      */
-    CHECK_VCF(hrc_vcfs)
+    CHECK_VCF(hrc_vcfs.flatten())
 
     /*
      * Step 7: bgzip (parallel per chr)
      */
-    BGZIP_VCF(hrc_vcfs)
+    BGZIP_VCF(hrc_vcfs.flatten())
 }
 
 process CREATE_LGEN {
@@ -199,13 +195,13 @@ process CHECK_VCF {
 
     script:
     """
-    export LD_LIBRARY_PATH=${params.openssl_path}:\$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=${params.openssl_path}:${LD_LIBRARY_PATH:-}
 
-    chr=\$(echo ${hrc_vcf} | sed -n 's/.*chr\\([0-9]\\+\\).*/\\1/p')
+    base=$(basename ${hrc_vcf} .vcf)
 
     ${params.python2_path}/python2.7 ${projectDir}/scripts/checkVCF.py \
         -r ${params.checkvcf_ref} \
-        -o check-chr\${chr} \
+        -o check-${base} \
         ${hrc_vcf}
     """
 }
