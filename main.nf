@@ -121,7 +121,7 @@ process UPDATE_BUILD {
           path(fam)
 
     output:
-    tuple val(prefix + '_GSA_updated'),
+    tuple val("${prefix}_GSA_updated"),
           path("${prefix}_GSA_updated.bed"),
           path("${prefix}_GSA_updated.bim"),
           path("${prefix}_GSA_updated.fam")
