@@ -42,6 +42,7 @@ workflow {
     /* # Restrict explicitly to chromosomes 1–22 */
     hrc_by_chr = hrc_by_chr.filter { prefix, chr, vcf ->
         chr in 1..22
+    }
 
     /*
      * Step 6: checkVCF (parallel per chr)
@@ -120,10 +121,10 @@ process UPDATE_BUILD {
           path(fam)
 
     output:
-    tuple val(prefix),
-          path("${prefix}_GSA_updated.bed"),
-          path("${prefix}_GSA_updated.bim"),
-          path("${prefix}_GSA_updated.fam")
+    tuple val(updated_prefix),
+          path("${updated_prefix}.bed"),
+          path("${updated_prefix}.bim"),
+          path("${updated_prefix}.fam")
 
     script:
     """
@@ -132,7 +133,7 @@ process UPDATE_BUILD {
     ${projectDir}/scripts/update_build.sh \
         ${prefix} \
         /groups/umcg-immunogenetics/tmp02/users/NathanRibeiro/tools/GSA_strand_v3/GSAMD-24v3-0-EA_20034606_A1-b37.strand \
-        ${prefix}_GSA_updated
+        ${updated_prefix}
     """
 }
 
@@ -141,25 +142,25 @@ process PLINK_FREQ {
     publishDir "${params.output_dir}/GSA_updated", mode: 'copy'
 
     input:
-    tuple val(prefix),
+    tuple val(updated_prefix),
           path(bed),
           path(bim),
           path(fam)
 
     output:
-    tuple val(prefix),
+    tuple val(updated_prefix),
           path(bim),
-          path("${prefix}.frq"),
-          path("${prefix}.log")
+          path("${updated_prefix}.frq"),
+          path("${updated_prefix}.log")
 
     script:
     """
     module load PLINK/1.9-beta6-20190617
 
     plink \
-      --bfile ${prefix} \
+      --bfile ${updated_prefix} \
       --freq \
-      --out ${prefix}
+      --out ${updated_prefix}
     """
 }
 
@@ -168,14 +169,14 @@ process MAKE_HRC_VCF {
     publishDir "${params.output_dir}/HRC_formatted", mode: 'copy'
 
     input:
-    tuple val(prefix),
+    tuple val(updated_prefix),
           path(bim),
           path(frq),
           path(log)
 
     output:
-    tuple val(prefix),
-          path("${prefix}-updated-chr*.vcf")
+    tuple val(updated_prefix),
+          path("${updated_prefix}-updated-chr*.vcf")
 
     script:
     """
@@ -198,7 +199,7 @@ process CHECK_VCF {
     publishDir "${params.output_dir}/checkVCF", mode: 'copy'
 
     input:
-    tuple val(prefix),
+    tuple val(updated_prefix),
           val(chr),
           path(vcf)
 
@@ -221,12 +222,12 @@ process BGZIP_VCF {
     publishDir "${params.output_dir}/VCF_compressed", mode: 'copy'
 
     input:
-    tuple val(prefix),
+    tuple val(updated_prefix),
           val(chr),
           path(vcf)
 
     output:
-    path "${prefix}_final-chr${chr}.vcf.gz"
+    path "${updated_prefix}_final-chr${chr}.vcf.gz"
 
     script:
     """
@@ -235,6 +236,6 @@ process BGZIP_VCF {
     bcftools view \
         ${vcf} \
         -Oz \
-        -o ${prefix}_final-chr${chr}.vcf.gz
+        -o ${updated_prefix}_final-chr${chr}.vcf.gz
     """
 }
