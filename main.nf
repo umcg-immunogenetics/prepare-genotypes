@@ -9,7 +9,7 @@ workflow {
     /*
      * Step 1: finalreport → lgen/map/fam
      */
-    lgen_files = CREATE_LGEN(
+    lgen_ch = CREATE_LGEN(
         file(params.input.final_report),
         file(params.input.sample_info)
     )
@@ -17,32 +17,32 @@ workflow {
     /*
      * Step 2: lgen → plink bed
      */
-    bed_prefix = LGEN_TO_PLINK(lgen_files)
+    plink_ch = LGEN_TO_PLINK(lgen_ch)
 
     /*
      * Step 3: update build
      */
-    updated_prefix = UPDATE_BUILD(bed_prefix)
+    updated_ch = UPDATE_BUILD(plink_ch)
 
     /*
      * Step 4: plink freq
      */
-    freq_prefix = PLINK_FREQ(updated_prefix)
+    freq_ch = PLINK_FREQ(updated_ch)
 
     /*
      * Step 5: HRC formatting
      */
-    hrc_vcf = MAKE_HRC_VCF(freq_prefix)
+    hrc_ch = MAKE_HRC_VCF(freq_ch)
 
     /*
      * Step 6: checkVCF (parallel per chr)
      */
-    checked = CHECK_VCF(chr_ch, hrc_vcf.vcf)
+    CHECK_VCF(chr_ch, hrc_ch)
 
     /*
      * Step 7: bgzip (parallel per chr)
      */
-    BGZIP_VCF(chr_ch, hrc_vcf.vcf)
+    BGZIP_VCF(chr_ch, hrc_ch)
 }
 
 process CREATE_LGEN {
@@ -74,6 +74,9 @@ process CREATE_LGEN {
 
 process LGEN_TO_PLINK {
 
+    memory '16 GB'
+    publishDir "${params.output_dir}", mode: 'copy'
+
     input:
     tuple val(prefix),
           path(lgen),
@@ -90,32 +93,41 @@ process LGEN_TO_PLINK {
     """
     module load PLINK/1.9-beta6-20190617
 
-    plink --lfile ${prefix} \
-          --autosome \
+    plink --lfile ${prefix}
           --make-bed \
           --out ${prefix}
+          --memory 16000
     """
 }
 
 process UPDATE_BUILD {
 
+    process UPDATE_BUILD {
+
     publishDir "${params.output_dir}/GSA_updated", mode: 'copy'
 
     input:
-    path bed_prefix
+    tuple val(prefix),
+          path(bed),
+          path(bim),
+          path(fam)
 
     output:
-    path "${params.dataset}_GSA_updated.*"
+    tuple val(prefix),
+          path("${prefix}_GSA_updated.bed"),
+          path("${prefix}_GSA_updated.bim"),
+          path("${prefix}_GSA_updated.fam")
 
     script:
     """
     module load PLINK/1.9-beta6-20190617
 
     ${projectDir}/scripts/update_build.sh \
-        ${bed_prefix.baseName} \
+        ${prefix} \
         /groups/umcg-immunogenetics/tmp02/users/NathanRibeiro/tools/GSA_strand_v3/GSAMD-24v3-0-EA_20034606_A1-b37.strand \
-        ${params.dataset}_GSA_updated
+        ${prefix}_GSA_updated
     """
+}
 }
 
 process PLINK_FREQ {

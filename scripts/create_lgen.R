@@ -18,8 +18,7 @@ fam_out <- args[5]
 # Conversion -----
 Finalreport<-as.data.frame(read.table(file=illumina_file, sep='\t', skip = 9, header = T))
 
-Finalreport <- filter(Finalreport, Sample.ID %in% samples) %>%
-        filter(Allele1...Top != 'I')
+Finalreport <- filter(Finalreport, Allele1...Top != 'I')
 Finalreport["empty"]="0"
 
 # Create mapping file with SNP positions
