@@ -11,7 +11,7 @@ Copy the codes to your folder where you want to run the pipeline.
 ```
 # Go to your directory, for example
 cd /groups/umcg-immunogenetics/tmp02/users/YourName/
-git clone https://github.com/nvribeiro/imputation-pipeline.git
+git clone https://github.com/umcg-immunogenetics/prepare-genotypes.git
 ```
 
 ### 2. Create the sampleinfo file
@@ -33,14 +33,14 @@ CeDNN_1244,1,2
 CeDNN_1254,2,2
 ```
 
-Save this file as `sample_info.csv` in the folder `imputation-pipeline`
+Save this file as `sample_info.csv` in the folder `prepare-genotypes`
 
 ### 3. Update the file nextflow.config
 Edit the file `nextflow.config` and change the parameters `dataset` to the name of your dataset and `final_report` to the path where your FinalReport.txt is located.
 
 ### 4. Run
-To start the pipeline simply submit the job `submit.sh` as a sbatch job, located in the `imputation-pipeline` folder.
+To start the pipeline simply submit the job `submit.sh` as a sbatch job, located in the `prepare-genotypes` folder.
 ```
-cd imputation-pipeline
+cd prepare-genotypes
 sbatch submit.sh
 ```
